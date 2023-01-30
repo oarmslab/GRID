@@ -1,0 +1,305 @@
+---
+title: "Harmonization"
+author: "Armstrong Obale"
+date: "2023-01-19"
+output: html_document
+---
+
+
+```{r}
+library(tidyverse) #load packages
+library(tibble)
+```
+
+#Simulations
+
+Let's do some simulation first
+
+```{r}
+white <- data.frame(id = 1:6,
+                    age = c(52,34,43,45,25,26),
+                    sex = c("male", "male", "female", "male", "male", "male"),
+                    alcohol = c("yes", "no", "sometimes", "yes", "no", "no"))
+red <- data.frame(id = 1:5,
+                    smoking = c("yes", "no", "no", "no", "no"),
+                    alco_contion = c("yes", "no","yes","yes","no"),
+                    gender = c("male", "male", "female", "male", "male"),
+                    age = c(50, 45, 40, 30, 20))
+
+```
+
+
+Now let's reorder the columns in  data1 to match those in data1
+
+#Reordering the columns of data2
+
+```{r}
+data2_rec = red[, c(1,5,4,3,2)]
+```
+
+Now we are sure that our dimensions are close We could use rbind() but it goes only for equal columns so let us use bind_rows(). One more problem is which column name shall we use? Let's change the column name of data2_rec to match those of data1
+
+#Changing the column names of data 2
+
+```{r}
+colnames(data2_rec) = c("id","age","sex","alcohol", "smoking")
+```
+
+Now let's merge our data
+
+```{r}
+data_new <- bind_rows(white, data2_rec)
+head(data_new)
+```
+
+We are making progress!!! How can we put this in a function so it does it for us automatically. One other thing though..... how do we index the column of a data frame? With 'grep("name of column", colname(df))' we can get the index of a column.  Let's try something.
+
+```{r}
+data2_rec2 <- red[, c(grep("id", colnames(red)),grep("age", colnames(red)), grep("gender", colnames(red)),
+                        grep("alco_contion", colnames(red)), grep("smoking", colnames(red)))] 
+
+colnames(data2_rec2) = c(colnames(white), "smoking") #This renames the column names of data2_rec2, the data frame who's columns have been reordered according to the order of variables in data1, such that they match.  
+
+data_new2 <- bind_rows(white, data2_rec2) #binding our data sets by row
+head(data_new2)
+```
+Simulation 1
+
+```{r}
+var = c("id", "age", "gender", "alco_contion")
+storage = c("id", "age", "gender", "alco_contion")
+for (i in var){
+      storage[i] <- grep(i, colnames(red))
+}
+#data2_new <- data2[, storage]
+
+other_variables <- setdiff(colnames(red), var)
+
+#colnames(data2_new) <- c(colnames(data1))
+
+
+#data1_other_vars = subset(data1_copy, select = -colnames(data1_copy) %in% var) 
+data1_other_vars = subset(red, select = !colnames(red) %in% var)
+#colnames(data2_new[, storage]) %in% colnames(data1)
+
+#data2_new <- bind_cols(data2_new, data1_other_vars)
+
+#harmonized_data <- bind_rows(data1, data2_new) #binding our data sets by row
+#harmonized_data
+```
+
+Simulation 2
+```{r}
+var1 = c("id", "age", "sex","alcohol")
+var2 = c("id", "age", "gender", "alco_contion")
+storage1 = c()
+storage2 = c()
+
+for (i in var1){
+      storage1[i] <- grep(i, colnames(data1))
+} #this is for data1
+
+for (i in var){
+      storage2[i] <- grep(i, colnames(data2))
+} #this is for data2
+
+data1_new <- data1[, storage1]
+data2_new <- data2[, storage2]
+
+other_variables <- setdiff(colnames(data2), var)
+
+colnames(data2_new) <- c(colnames(data1))
+
+
+#data1_other_vars = subset(data1_copy, select = -colnames(data1_copy) %in% var) 
+data1_other_vars = subset(data2, select = !colnames(data2) %in% var)
+#colnames(data2_new[, storage]) %in% colnames(data1)
+
+data2_new <- bind_cols(data2_new, data1_other_vars)
+
+harmonized_data <- bind_rows(data1, data2_new) #binding our data sets by row
+harmonized_data
+```
+
+harmonize_data(data1 = Ej, data2 = data1, var1_common = c("id", "age","gender","alcohol_use"), var2_common = c("id", "age", "gender", "alcohol_use"))
+
+Simulate 3
+
+```{r}
+harmonize_data <- function(data1, data2, var1_common, var2_common){
+# var2_common is a character string of variables in data2 which are present in data1 though may not have the same name
+# var1_common is the character string of variables in data1 which are present in data2 though may not have the same name
+data1=Ej
+data2=data1
+var1_common = c("id", "age","gender","alcohol_use")
+var2_common = c("id", "age", "gender", "alcohol_use")
+
+var1_common1 = c()
+  
+  for (i in var1_common){
+  var1_common1[i] <- c(i)
+} # iterating over the variables. This is done because the number may vary
+
+    
+var2_common1 = c()
+  
+  for (j in var2_common){
+  var2_common1[j] <- c(j)
+} # iterating over the variables. This is done because the number may vary
+
+storage1 = c()
+storage2 = c()
+
+for (i in var1_common1){
+      storage1[i] <- grep(i, colnames(data1))
+} #this is for data1
+
+for (j in var2_common1){
+      storage2[j] <- grep(j, colnames(data2)) 
+# We are pulling the index numbers of the variables such that we could rearrange them to match the order of variables in data1 
+}
+
+data1_new <- data1[, storage1]
+data2_new <- data2[, storage2] #Here we are rearranging the common variables in data2 such that they match those in data 1
+
+other_variables <- setdiff(colnames(data2), var2_common)
+
+colnames(data2_new) <- c(colnames(data1_new))
+
+
+data2_other_vars = subset(data2, select = !colnames(data2) %in% var2_common)
+
+data2_new <- bind_cols(data2_new, data2_other_vars)
+
+
+data1_other_vars = subset(data1, select = !colnames(data1) %in% var1_common)
+
+data1_new <- bind_cols(data1, data1_other_vars)
+
+
+harmonized_data <- bind_rows(data1_new, data2_new) #binding our data sets by row
+
+return(harmonized_data)
+}
+
+```
+
+
+Let's try our new function
+```{r}
+harmonize_data(data1 = data1, data2 = data2, var1_common = c("id","age","sex","alcohol"), var2_common = c("id", "age", "gender", "alco_contion"))
+```
+
+
+ Interesting. Now can we try something like a function
+
+```{r}
+harmonize_data <- function(data1, data2, var1_common, var2_common){
+# data1 is the first data set. The function is designed such that the common variables in the new data set will take the corresponding variable names of data1 
+# data2 is the second data set
+# var2_common is a character string of variables in data2 which are present in data1 though may not have the same name
+# var1_common is the character string of variables in data1 which are present in data2 though may not have the same name
+  
+  #In brief, this function harmonizes data by 1) matching two data sets by the data elements (variables) provided, 2) aligning the common elements such that they fall on the same index positions and share the same column names (the column names of the elements from data1), 3) binding the two data sets by rows such that the corresponding rows fall in place and the non corresponding rows are filled with NAs. 
+  
+var1_common1 = c()
+  
+  for (i in var1_common){
+  var1_common1[i] <- c(i)
+} # iterating over the variables. This is done because the number may vary
+
+    
+var2_common1 = c()
+  
+  for (j in var2_common){
+  var2_common1[j] <- c(j)
+} # iterating over the variables. This is done because the number may vary
+
+storage1 = c()
+storage2 = c()
+
+for (i in var1_common1){
+      storage1[i] <- grep(i, colnames(data1))
+} #this is for data1
+
+for (j in var2_common1){
+      storage2[j] <- grep(j, colnames(data2)) 
+# We are pulling the index numbers of the variables such that we could rearrange them to match the order of variables in data1 
+}
+
+data1_new <- data1[, storage1]
+data2_new <- data2[, storage2] #Here we are rearranging the common variables in data2 such that they match those in data 1
+
+other_variables <- setdiff(colnames(data2), var2_common)
+
+colnames(data2_new) <- c(colnames(data1_new))
+
+
+data2_other_vars = subset(data2, select = !colnames(data2) %in% var2_common)
+
+data2_new <- bind_cols(data2_new, data2_other_vars)
+
+
+data1_other_vars = subset(data1, select = !colnames(data1) %in% var1_common)
+
+data1_new <- bind_cols(data1_new, data1_other_vars)
+
+
+harmonized_data <- bind_rows(data1_new, data2_new) #binding our data sets by row
+
+return(harmonized_data)
+}
+```
+
+
+Let's try our new function
+```{r}
+harmonize_data(data1 = white, data2 = red, var1_common = c("id","age","sex","alcohol"), var2_common = c("id", "age", "gender", "alco_contion"))
+```
+
+Lets try something different
+
+```{r}
+Tz <- data.frame(id = 1:10,
+                    age = c(52,34,43,45,25,26,50,30,34,20),
+                    sex = c("male", "male", "female", "male", "male", "male", "female",   "female","male", "male"),
+                    use_of_alcohol = c("yes", "no", "sometimes", "yes", "no", "no","yes","yes", "yes", "no")
+                 )
+Br <- data.frame(id = 1:7,
+                    smoking = c("yes", "no", "no", "no", "no", "yes", "no"),
+                    alcohol_use = c("yes", "no","yes","yes","no","no","no"),
+                    gender = c("male", "male", "female", "male", "male", "female", "female"),
+                    age = c(50, 45, 40, 30, 20, 44, 53),
+                 systolic_bp = c(180, 175, 120, 110, 124, 114, 128),
+                 height = c(1.5, 1.78, 1.67, 1.56, 1.45, 1.67, 1.88))
+```
+
+
+```{r}
+harmonize_data(data1 = white, data2 = Br, var1_common = c("id", "age", "sex", "alcohol"), var2_common = c("id", "age", "gender", "alcohol_use"))
+```
+
+`
+```{r}
+Ej <- data.frame(id = 1:7,
+                    smoking = c("yes", "no", "no", "no", "no", "yes", "no"),
+                    alcohol_use = c("yes", "no","yes","yes","no","no","no"),
+                    gender = c("male", "male", "female", "male", "male", "female", "female"),
+                    age = c(50, 45, 40, 30, 20, 44, 53),
+                 systolic_bp = c(180, 175, 120, 110, 124, 114, 128),
+                 height = c(1.5, 1.78, 1.67, 1.56, 1.45, 1.67, 1.88),
+                 diastolic_bp = c(90, 87, 76, 69, 80, 45, 74))
+```
+
+
+```{r}
+harmonize_data(data1 = Ej, data2 = white, var1_common = c("id", "age","gender","alcohol_use"), var2_common = c("id", "age", "sex", "alcohol"))
+```
+
+Try
+```{r}
+data <- harmonize_data(data1 = Adhe1, data2 = Adhe2, var1_common = c("Age", "Gender"), var2_common = c("Age", "Gender"))
+```
+
+
+

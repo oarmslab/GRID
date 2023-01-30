@@ -1,0 +1,109 @@
+---
+title: "Discrepancies"
+author: "Armstrong Obale"
+date: "2023-01-09"
+output: html_document
+---
+
+###Load Packages
+
+```{r}
+library(ggVennDiagram)
+library(tidyverse)
+library(readxl)
+```
+
+
+###Load imperfect match Data
+```{r}
+data <- read_excel("D:/Discrepancies analysis/GRID Discrepancies/Discrep_var.xlsx") 
+```
+
+
+###Create sets for imperfect match
+```{r}
+Brazil <- data %>% select(Brazil) %>% na.omit(Brazil) 
+Egypt <- data %>% select(Egypt) %>% na.omit(Egypt)
+Romania <- data %>% select(Romania) %>% na.omit(Romania)
+Tanzania <- data %>% select(Tanzania) %>% na.omit(Tanzania)
+WHO <- data %>% select(WHO) %>% na.omit(Tanzania)
+```
+
+### Venn diagram for imperfect match
+```{r}
+d1 <- ggVennDiagram(c(Brazil, Egypt, Romania, Tanzania), label_alpha = 0, set_color = "Black", label_color = "Black", set_size = 2.5, label_size = 2.5, label_percent_digit = 2) +
+  theme(legend.position = "none") +
+  ggplot2::scale_fill_gradient(low="White",high = "White") +
+  labs(subtitle = "A: Data elements by presence")
+```
+
+###Load perfect match data 
+```{r}
+data_p <- read_excel("D:/Discrepancies analysis/GRID Discrepancies/Discrep_perfect.xlsx")
+```
+
+###Create sets for imperfect match
+```{r}
+B <- data_p %>% select(Brazil) %>% na.omit(Brazil) 
+E <- data_p %>% select(Egypt) %>% na.omit(Egypt)
+R <- data_p %>% select(Romania) %>% na.omit(Romania)
+Ta <- data_p %>% select(Tanzania) %>% na.omit(Tanzania)
+```
+
+### Venn diagram for perfect match
+```{r}
+d2 <- ggVennDiagram(c(B, E, R, Ta), label_alpha = 0, set_color = "Black", label_color = "Black", set_size = 2.5, label_size = 2.5, label_percent_digit = 2) +
+  theme(legend.position = "none") +
+  ggplot2::scale_fill_gradient(low="White",high = "White") +
+  labs(subtitle = "B: Data elements by equality")
+```
+
+
+```{r}
+#install.packages("cowplot")
+library(cowplot)
+```
+
+```{r}
+plot_grid(d1, d2, nrow = 2, vjust = 1)
+```
+
+
+```{r}
+pdf()
+  plot_grid(d1, d2, nrow = 2, vjust = 1)
+dev.off()
+```
+
+
+###Upset loading
+```{r}
+library(UpSetR)
+```
+
+
+```{r}
+Up_data <- data %>% replace(is.na(.), 0)
+```
+
+```{r}
+upset(fromList(Up_data), order.by = "freq")
+```
+
+
+```{r}
+pdf()
+upset(fromList(Up_data), sets = c('WHO', 'Brazil', 'Egypt', 'Romania', 'Tanzania'), intersections = list(list('Tanzania'), list('Egypt'), list('Romania'), list('Brazil'), list('WHO'), list('WHO', 'Brazil', 'Egypt', 'Romania', 'Tanzania'), list('WHO', 'Tanzania'), list('WHO', 'Romania', 'Egypt', 'Tanzania'), list('WHO', 'Egypt'), list ('WHO', 'Romania'),  list('WHO', 'Brazil', 'Romania', 'Egypt')), order.by = "freq")
+dev.off()
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+
